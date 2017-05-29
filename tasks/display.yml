@@ -7,7 +7,7 @@
 - name: "Display : Wait until TeamSpeak 3 ServerQuery is open"
   wait_for:
     port: "{{ teamspeak_network.query.port }}"
-    timeout: 10 
+    timeout: 30
 
 - name: "Display : Fetch the password of the Server Query Admin Account"
   shell: journalctl --unit teamspeak3-server.service --reverse | awk -F'"' '/password=/ { print $4; exit }'

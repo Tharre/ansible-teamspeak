@@ -1,0 +1,21 @@
+---
+- name: "Restoring database from backup"
+  copy:
+    src: "{{ teamspeak_restore_db_path }}"
+    dest: "{{ ts3server_dir }}/ts3server.sqlitedb"
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+    mode: 0600
+  notify:
+    - Restart TeamSpeak 3 Server
+  when: teamspeak_restore_db_path is not none
+
+- name: "Restoring files/ from backup"
+  unarchive:
+    src: "{{ teamspeak_restore_files_path }}"
+    dest: "{{ ts3server_dir }}"
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+  notify:
+    - Restart TeamSpeak 3 Server
+  when: teamspeak_restore_files_path is not none

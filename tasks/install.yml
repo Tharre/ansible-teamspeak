@@ -10,6 +10,11 @@
     shell: "{{ teamspeak.shell }}"
     system: yes
 
+- name: "Ensure bzip2 package is installed"
+  package:
+    name: bzip2
+    state: present
+
 - name: "Install : Download TeamSpeak {{ teamspeak.version }} Server files"
   get_url:
     url: "http://dl.4players.de/ts/releases/{{ teamspeak.version }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"

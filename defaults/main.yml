@@ -2,9 +2,9 @@
 # defaults file for teamspeak
 
 teamspeak:
-  user: "teamspeak"
+  user: "ts3"
   comment: "Teamspeak 3 user"
-  home: "/opt/teamspeak"
+  home: "/srv/ts3"
   shell: "/usr/sbin/nologin"
   symlink: "current"
   version: "3.0.13.8"

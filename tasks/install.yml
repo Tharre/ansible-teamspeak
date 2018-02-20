@@ -1,75 +1,40 @@
 ---
-# install tasks file for teamspeak
-
-# Start of installation
-- name: "Install : Create Teamspeak user"
-  user:
-    name: "{{ teamspeak.user }}"
-    comment: "{{ teamspeak.comment }}"
-    home: "{{ teamspeak.home }}"
-    shell: "{{ teamspeak.shell }}"
-    system: yes
 
 - name: "Ensure bzip2 package is installed"
   package:
     name: bzip2
     state: present
 
-- name: "Install : Download TeamSpeak {{ teamspeak.version }} Server files"
+- name: "Prepare temporary file for download"
+  tempfile: state=file
+  register: tmpfile
+
+- name: "Download teamspeak {{ teamspeak.version }} server files"
   get_url:
     url: "http://dl.4players.de/ts/releases/{{ teamspeak.version }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"
-    dest: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"
+    dest: "{{ tmpfile.path }}"
     checksum: "{{ teamspeak.checksum }}"
-    owner: "{{ teamspeak.user }}"
-    group: "{{ teamspeak.user }}"
 
-- name: "Install : Create TeamSpeak {{ teamspeak.version }} Server directory"
-  file:
-    path: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}"
-    state: directory
-    owner: "{{ teamspeak.user }}"
-    group: "{{ teamspeak.user }}"
-  register: mkdir
-
-# If a new directory has been created, check for (current) user data.
-- name: "Install : Checking for a currently installed TeamSpeak 3 Server with user data"
-  stat:
-    path: "{{ teamspeak.home }}/{{ teamspeak.symlink }}/teamspeak3-server_linux_amd64/files"
-  register: userdata
-  when: mkdir.changed
-
-# If user data has been found, this is an upgrade situation.
-- include: ts3update.yml
-  when: userdata.stat is defined and userdata.stat.exists == True
-
-# Created a new directory? Extract the files into it. Overwrites existing.
-- name: "Install : Extract TeamSpeak {{ teamspeak.version }} Server files"
+- name: "Install teamspeak server files"
   unarchive:
-    copy: no
-    src: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"
-    dest: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}/"
+    src: "{{ tmpfile.path }}"
+    remote_src: yes
+    dest: "{{ teamspeak.home }}"
     owner: "{{ teamspeak.user }}"
     group: "{{ teamspeak.user }}"
-  when: mkdir.changed
+    extra_opts: [--strip-components=1]
+  notify:
+    - Restart teamspeak server
 
-- name: "Install : Create/Update symlink to TeamSpeak {{ teamspeak.version }} Server"
+- name: "Cleanup temporary download file"
   file:
-    src: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}"
-    dest: "{{ teamspeak.home }}/{{ teamspeak.symlink }}"
-    state: link
+    state: absent
+    path: "{{ tmpfile.path }}"
+
+- name: "Create VERSION file"
+  copy:
+    content: "{{ teamspeak.version }}"
+    dest: "{{ teamspeak.home }}/VERSION"
+    mode: 0600
     owner: "{{ teamspeak.user }}"
     group: "{{ teamspeak.user }}"
-  notify:
-    - Restart TeamSpeak 3 Server
-
-- name: "Install : Install TeamSpeak 3 systemctl service file"
-  template:
-    src: teamspeak3-server.service.j2
-    dest: "{{ systemd_service_file_path }}/teamspeak3-server.service"
-    mode: 0644
-    owner: root
-    group: root
-  notify:
-    - Reload systemd
-    - Restart TeamSpeak 3 Server
-

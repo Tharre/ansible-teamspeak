@@ -31,6 +31,3 @@ teamspeak_network:
 
 teamspeak_create_default_virtualserver: yes
 teamspeak_machine_id:
-
-teamspeak_restore_db_path:
-teamspeak_restore_files_path:

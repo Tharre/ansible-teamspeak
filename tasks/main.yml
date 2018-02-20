@@ -1,69 +1,82 @@
 ---
-# tasks file for teamspeak
 
 - name: "Load OS specific variables"
   include_vars: "{{ item }}"
-  with_first_found: 
-    - files: 
+  with_first_found:
+    - files:
         - "{{ ansible_distribution|lower }}.yml"
         - "{{ ansible_os_family|lower }}.yml"
         - "{{ ansible_system|lower }}.yml"
-        - main.yml
-      paths: 
+      skip: true
+      paths:
         - ../vars
 
-# Installation of TeamSpeak 3 Server 
-- include: install.yml
+- name: "Ensure teamspeak user exists"
+  user:
+    name: "{{ teamspeak.user }}"
+    comment: "{{ teamspeak.comment }}"
+    home: "{{ teamspeak.home }}"
+    shell: "{{ teamspeak.shell }}"
+    system: yes
 
-# Store the TeamSpeak 3 Server directory in a short variable
-- name: "Set TeamSpeak 3 Server directory fact"
-  set_fact:
-    ts3server_dir: "{{ teamspeak.home }}/{{ teamspeak.symlink }}/teamspeak3-server_linux_amd64"
-
-# License file management
-  # Install a license file 
-- include: install_license.yml
-  when: teamspeak_use_license
-
-  # Remove a possible leftover license file when teamspeak_use_license is disabled.
-  # The default is to look for it in the TeamSpeak 3 Server directory, so
-  # we remove it there if the option has been disabled.
-- name: "License : Clean up license in TeamSpeak 3 Server directory if needed"
+- name: "Ensure everything is owned by {{ teamspeak.user }}"
   file:
-    path: "{{ ts3server_dir }}/licensekey.dat"
-    state: absent
-  when: not teamspeak_use_license
-# End of license file management
+    path: "{{ teamspeak.home }}"
+    state: directory
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+    recurse: yes
 
-# Configuration of TeamSpeak 3 Server (if requested)
-  # Create configuration file
-- include: config.yml
+- name: "Check teamspeak server version"
+  slurp:
+    src: "{{ teamspeak.home }}/VERSION"
+  ignore_errors: yes
+  register: ts3version
+
+- include_tasks: install.yml
+  when: ts3version.content|default(None)|b64decode != teamspeak.version
+
+- name: "Create teamspeak server configuration file"
+  template:
+    src: ts3server.ini.j2
+    dest: "{{ teamspeak.home }}/{{ teamspeak_ini_filename }}"
+    mode: 0644
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
   when: teamspeak_ini_enabled
+  notify:
+    - Restart teamspeak server
 
-  # Clean-up a lingering configuration file if we don't need it anymore
-- name: "Configuration : Clean-up old configuration file if needed"
+- name: "Ensure license directory exists"
   file:
-    path: "{{ teamspeak.home }}/{{ teamspeak.symlink }}/teamspeak3-server_linux_amd64/{{ teamspeak_ini_filename }}"
-    state: absent
-  when: not teamspeak_ini_enabled
-# End of configuration
+    path: "{{ teamspeak_licensepath }}"
+    state: directory
+  when: teamspeak_licensepath is not none and teamspeak_use_license
 
-# Restore from backups if they exist
-- include: restore_backup.yml
-  when: userdata.stat is defined and userdata.stat.exists == False
+- name: "Copy the license file"
+  copy:
+    src: "{{ teamspeak_license_srcfile }}"
+    dest: "{{ teamspeak_licensepath if teamspeak_licensepath is not none else teamspeak.home }}/licensekey.dat"
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+    mode: 0400
+  when: teamspeak_use_license
+  notify:
+    - Restart teamspeak server
 
-# Perform the running of handlers now
-# So we can do "Reload systemd" (and possibly queued clean-up) 
-# before we start using the new/changed .service file.
-- meta: flush_handlers
-# Make sure TeamSpeak 3 Server is started and enabled
-- name: Enable and start TeamSpeak 3 Server
-  service:
+- name: "Install systemd service file"
+  template:
+    src: teamspeak3-server.service.j2
+    dest: "{{ systemd_service_file_path }}/teamspeak3-server.service"
+    mode: 0644
+    owner: root
+    group: root
+  notify:
+    - Restart teamspeak server
+
+- name: "Ensure teamspeak server is running and enabled"
+  systemd:
     name: teamspeak3-server
     state: started
     enabled: yes
-
-# Display Teamspeak 3 Server Token and Password if this is a new installation
-# (a new installation has no userdata, and this is checked for in install.yml)
-- include: display.yml
-  when: userdata.stat is defined and userdata.stat.exists == False
+    daemon_reload: yes

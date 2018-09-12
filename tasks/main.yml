@@ -75,6 +75,15 @@
   notify:
     - Restart teamspeak server
 
+- name: "Install : Accept license for TeamSpeak {{ teamspeak.version }} server"
+  copy:
+    dest: "{{ teamspeak.home }}/.ts3server_license_accepted"
+    content: ""
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+  notify:
+    - Restart teamspeak server
+
 - name: "Install systemd service file"
   template:
     src: teamspeak3-server.service.j2

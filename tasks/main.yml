@@ -47,6 +47,17 @@
   notify:
     - Restart teamspeak server
 
+- name: "Configuration : Create TeamSpeak 3 database server configuration file"
+  template:
+    src: ts3db_mariadb.ini.j2
+    dest: "{{ teamspeak.home }}/ts3db_mariadb.ini"
+    mode: 0644
+    owner: "{{ teamspeak.user }}"
+    group: "{{ teamspeak.user }}"
+  notify:
+    - Restart teamspeak server
+  when: teamspeak_db.plugin == 'ts3db_mariadb'
+
 - name: "Ensure license directory exists"
   file:
     path: "{{ teamspeak_licensepath }}"

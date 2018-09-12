@@ -1,1 +1,1 @@
-systemd_service_file_path: "/lib/systemd/system/"
+systemd_service_file_path: "/etc/systemd/system/"

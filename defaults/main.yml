@@ -14,16 +14,19 @@ teamspeak:
 teamspeak_ini_enabled: no
 teamspeak_ini_filename: ts3server.ini
 
+#by setting this to true you accept to license included with teamspeak
+teamspeak_accept_license: false
+
 teamspeak_use_license: no
 teamspeak_license_srcfile: files/licensekey.dat
-teamspeak_licensepath: 
+teamspeak_licensepath:
 
 teamspeak_network:
   voice:
     default_port: 9987
     ip: 0.0.0.0
   filetransfer:
-    port: 30033 
+    port: 30033
     ip: 0.0.0.0
   query:
     port: 10011

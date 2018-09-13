@@ -81,7 +81,7 @@
     content: ""
     owner: "{{ teamspeak.user }}"
     group: "{{ teamspeak.user }}"
-  when: accept_teamspeak_license
+  when: teamspeak_accept_license
   notify:
     - Restart teamspeak server
 

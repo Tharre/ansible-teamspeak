@@ -14,12 +14,20 @@ teamspeak:
 teamspeak_ini_enabled: no
 teamspeak_ini_filename: ts3server.ini
 
-#by setting this to true you accept to license included with teamspeak
+# by setting this to true you accept to license included with teamspeak
 teamspeak_accept_license: false
 
 teamspeak_use_license: no
 teamspeak_license_srcfile: files/licensekey.dat
 teamspeak_licensepath:
+
+teamspeak_db:
+  host:
+  port:
+  username:
+  password:
+  database:
+  plugin:
 
 teamspeak_network:
   voice:

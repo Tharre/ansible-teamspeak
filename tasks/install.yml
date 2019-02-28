@@ -11,7 +11,7 @@
 
 - name: "Download teamspeak {{ teamspeak.version }} server files"
   get_url:
-    url: "http://dl.4players.de/ts/releases/{{ teamspeak.version }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"
+    url: "https://files.teamspeak-services.com/releases/server/{{ teamspeak.version }}/teamspeak3-server_linux_amd64-{{ teamspeak.version }}.tar.bz2"
     dest: "{{ tmpfile.path }}"
     checksum: "{{ teamspeak.checksum }}"
 
